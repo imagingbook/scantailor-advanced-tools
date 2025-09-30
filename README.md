@@ -18,10 +18,16 @@ the monochrome text image (foreground) transparently on top of the RGB picture i
 The background image is usually subsampled (typ. to 300 dpi), which may be suppressed by passing
 option `--dpi=0`.
 
+The scripts first converts each scan page to a single raw PDF, which is then compressed and stored in 
+directory `./pdf`. Once all pages are processed, the associated PDFs are merged into a single PDF document,
+to which OCR is applied optionally. The intermediate single page PDFs are removed by default but may be preserved
+for inspection or other use.
+
 ## File structure
 
-The script is supposed to be run inside ScanTailor's *source folder* `<scans>`, where the original scan images are
-located. When run (with *mixed* pages and the `Split output` option activated), ScanTailor creates the directories
+The script is supposed to be run inside ScanTailor's *source folder* (referred to as `<scans>` here), 
+where the original scan images are located.
+When run (with *mixed* pages and the `Split output` option activated), ScanTailor creates the directories
 ```
   <scans>/out
   <scans>/out/background
@@ -31,7 +37,7 @@ which are read by this script. This in turn creates and fills the additional dir
 ```
   <scans>/pdf
 ```
-and puts the combined document PDF in
+and places the combined document PDF in
 ```
   <scans>/out.pdf
 ```
@@ -42,7 +48,7 @@ Directory `<scans>/pdf` is automatically removed at the end of the script if giv
 Copy file `make-pdfs.py` to the ScanTailor's *source folder* (which contains the `./out` directory
 filled with page output TIFFs),
 then navigate to the source folder (`cd <scans>`).
-To use only default parameters call
+To use only default parameters open a (bash) shell and call
 ```bash
 > python3 make-pdfs.py
 ```
