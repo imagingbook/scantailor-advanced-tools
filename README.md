@@ -40,12 +40,27 @@ Directory `<scans>/pdf` is automatically removed at the end of the script if giv
 ## Usage
 
 Copy file `make-pdfs.py` to the ScanTailor's *source folder* (which contains the `./out` directory
-filled with page output TIFFs). To use only default parameters simply call 
-* `> python3 make-pdfs.py`
-or, still simpler,
-* `> ./make-pdfs.py`
-Complete options 
-* `> ./make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true`
+filled with page output TIFFs),
+then navigate to the source folder (`cd <scans>`).
+To use only default parameters call
+```bash
+> python3 make-pdfs.py
+```
+or, even simpler,
+```bash
+> ./make-pdfs.py
+```
+To override the default parameters, simply provide optional arguments.
+The following example downsamples all picture content to 200 dpi (default is 300 dpi),
+performs OCR with English *and* German languages active and does not remove the intermediate
+page PDFs:
+```bash
+> ./make-pdfs.py --dpi=200 --lang=eng+deu --keepPDFs=true
+```
+To see all available options run
+```bash
+> ./make-pdfs.py --help
+```
 
 ## System requirements and installation
 * Linux apps:
