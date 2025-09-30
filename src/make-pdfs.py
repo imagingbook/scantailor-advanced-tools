@@ -3,25 +3,31 @@
 # Author: W. Burger (imagingbook)
 # GitHub: https://github.com/imagingbook/scantailor-advanced-pdf
 #
+# Assumed directory structure:
+# <scans> ...... ...............contains original page scans (already processed by ScanTailor)
+# <scans>/out ................. Scantailor output TIFFs (all pages)
+# <scans>/out/background ...... Scantailor background TIFFs (mixed pages only)
+# <scans>/out/foreground ...... Scantailor foreground TIFFs (mixed pages only)
+# <scans>/pdf ................. PDFs produced by this script, one for each page
+# <scans>/out.pdf ............. the combined document PDF
+#
 # Usage:
-#   typ. <root> = /mnt/d/scan-projects/xxx/orig-all/ o.ä.
+#   Assumes that Scantailor's root folder (with original scan images) is <scans>.
+#   For example, <scans> = "~/scan-projects/book1/orig-all".
+#   If a virtual Python environment is used ("scaintailor-env" here), activate it:
 #   > source ~/lensfun-env/bin/activate (only once, echo $VIRTUAL_ENV gives current env)
-#   > cp make-pdfs.py <root>
-#   > cd <root>
+#   Copy this script to the <cans> directory:
+#   > cp make-pdfs.py <scans>
+#   Navigate to the <cans> directory:
+#   > cd <scans>
+#   Run the script:
 #   > python3 make-pdfs.py
 #   > python3 make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true
-#   > python3 make-pdfs.py --lang=eng+deu       # do OCR in german
-#   > python3 make-pdfs.py --lang=none      # skip OCR
+#   > python3 make-pdfs.py --lang=eng+deu                           # do OCR in english and german
+#   > python3 make-pdfs.py --lang=none                              # skip OCR
 #   > python3 make-pdfs.py --help
+#   Deactivate the virtual environment (if used):
 #   > deactivate (optional at end)
-#
-# The following directory structure is assumed:
-# <scans> ...... contains original images from scanner (ScanTailor's root directory)
-#   out ................. Scantailor output TIFFs (all pages)
-#       background ...... Scantailor background TIFFs (mixed pages only)
-#       foreground ...... Scantailor foreground TIFFs (mixed pages only)
-#   pdf ................. PDFs produced by this script, one for each page
-#   out.pdf ............. the combined document PDF
 #
 # This script assumes use of ScanTailor-Advanced (1.0.19 or higher), with
 # the 'Split output' option applied to 'Mixed' pages, putting marked picture regions into RGB background TIFFs
