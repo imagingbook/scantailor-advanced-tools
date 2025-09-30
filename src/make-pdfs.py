@@ -139,7 +139,7 @@ def resample_image_to_dpi(img_path, target_dpi):
 # Collect page files
 all_files = sorted(f for f in os.listdir(out_dir) if f.lower().endswith(('.tif','.tiff')))
 if not all_files:
-    sys.exit(f"❌ No TIFF files found in '{out_dir}'")
+    sys.exit(f"No TIFF files found in '{out_dir}'")
 
 count_standard = 0
 count_mixed = 0
