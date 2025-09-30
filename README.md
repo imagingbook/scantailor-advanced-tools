@@ -18,6 +18,8 @@ the monochrome text image (foreground) transparently on top of the RGB picture i
 The background image is usually subsampled (typ. to 300 dpi), which may be suppressed by passing
 option `--dpi=0`.
 
+## File structure
+
 The script is supposed to be run inside ScanTailor's *source folder* `<scans>`, where the original scan images are
 located. When run (with *mixed* pages and the `Split output` option activated), ScanTailor creates the directories
 ```
@@ -35,10 +37,20 @@ and puts the combined document PDF in
 ```
 Directory `<scans>/pdf` is automatically removed at the end of the script if given `--keepPDFs=false`.
 
-## System requirements
+## Usage
+
+Copy file `make-pdfs.py` to the ScanTailor's *source folder* (which contains the `./out` directory
+filled with page output TIFFs). To use only default parameters simply call 
+* `> python3 make-pdfs.py`
+or, still simpler,
+* `> ./make-pdfs.py`
+Complete options 
+* `> ./make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true`
+
+## System requirements and installation
 * Linux apps:
-      + `python3` `python3-pip` `python3-venv`
-      + `ghostscript` `tesseract-ocr` `tesseract-ocr-eng` `tesseract-ocr-deu`
+  + `python3` `python3-pip` `python3-venv`
+  + `ghostscript` `tesseract-ocr` `tesseract-ocr-eng` `tesseract-ocr-deu`
 * Python packages:
-      + `pip` `setuptools` `wheel`
-      + `pillow` `numpy` `PyMuPDF` `ocrmypdf`
+  + `pip` `setuptools` `wheel`
+  + `pillow` `numpy` `PyMuPDF` `ocrmypdf`
