@@ -1,6 +1,11 @@
-# scantailor-advanced-pdf
+# scantailor-advanced-tools
 
-A single Python script for processing [`ScanTail Advanced`](https://github.com/ScanTailor-Advanced/scantailor-advanced) output TIFFs to PDF. 
+A set of helper scripts for processing [`ScanTailor Advanced`](https://github.com/ScanTailor-Advanced/scantailor-advanced) 
+output to PDF.
+
+## About ScanTailor Advanced
+
+To do ...
 
 ## How this software works
 
