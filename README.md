@@ -3,9 +3,13 @@
 A set of helper scripts for processing [`ScanTailor Advanced`](https://github.com/ScanTailor-Advanced/scantailor-advanced) 
 output to PDF.
 
-## About ScanTailor Advanced
-
-To do ...
+[`ScanTailor Advanced`](https://github.com/ScanTailor-Advanced/scantailor-advanced) is an incredibly useful
+interactive tool for post-processing scanned pages.
+It provides operations such as page splitting, deskewing, content selection, managing page borders, de-warping and 
+high-resolution output rendering to TIFF images.
+This repository adds some helper scripts for processing output pages produced by ScanTailor Advanced, e.g., 
+to render and overlay pictures and text with different modes and resolutions, to combine pages
+into document PDFs and to perform OCR.
 
 ## How this software works
 
