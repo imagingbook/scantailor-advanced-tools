@@ -283,7 +283,7 @@ count_mixed = 0
 
 # Page by page loop
 for tiff_file in tiff_files:
-    base_name = tiff_file["filename"]
+    base_name = base_name = os.path.splitext(tiff_file["filename"])[0]
     output_pdf_path = os.path.join(pdf_dir, f"{base_name}.pdf")
     
     with tempfile.NamedTemporaryFile(prefix=base_name+"-", suffix=".pdf", delete=False) as tmp_pdf:
