@@ -22,6 +22,7 @@
 #   > cd <scans>
 #   Run the script:
 #   > python3 make-pdfs.py
+#   > python3 make-pdfs.py --list-only
 #   > python3 make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true
 #   > python3 make-pdfs.py --lang=eng+deu                           # do OCR in english and german
 #   > python3 make-pdfs.py --lang=none                              # skip OCR
@@ -61,6 +62,7 @@
 #       pillow numpy PyMuPDF ocrmypdf
  
 
+import sys
 import os
 import argparse
 from io import BytesIO
@@ -91,6 +93,11 @@ parser.add_argument("--keepPDFs", type=str, default="false",
                     choices=["true", "false"],
                     help="Whether to keep the ./pdf directory (true/false). Default: false")
 
+parser.add_argument("--list-only", action="store_true",
+                    help="Only list TIFF files to be processed and exit")
+
+
+
 args = parser.parse_args()
 
 background_dpi = args.dpi   # 300
@@ -101,24 +108,120 @@ keep_pdfs = args.keepPDFs.lower() in ("1", "true", "yes")
 
 # ----------------------------------------------------------------------------------------
 
-out_dir = "./out"                                           # ScanTailor's output TIFFs are assumed here
-foreground_dir = os.path.join(out_dir, "foreground")        # 1-bit text TIFFs from ScanTailor
-background_dir = os.path.join(out_dir, "background")        # color/grayscale TIFF
-pdf_dir = "./pdf"                                           # directory to store individual page PDFs
-combined_pdf = "out-combined.pdf"                           # temporary PDF from merging all page PDFs
-final_pdf = "out.pdf"                                       # final PDF with or without OCR
-indent = "    "
+def collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=False):
+    """
+    Collects all TIFF files from the main output directory and classifies
+    them as 'standard' or 'mixed' depending on the presence of associated
+    foreground/background files.
 
-if not os.path.exists(out_dir):
-    sys.exit(f"The directory '{out_dir}' does not exist. Please run ScanTailor first.")
-
-# Create new ./pdf/ directory
-if os.path.exists(pdf_dir):
-    shutil.rmtree(pdf_dir)
-os.makedirs(pdf_dir, exist_ok=True)
-
-print(f"OCR language is {ocr_language}")
+    Returns a list of dicts, each with:
+        {
+            'filename': 'im0001.tif',
+            'path': 'out/im0001.tif',
+            'type': 'mixed' or 'standard',
+            'size': (width_px, height_px),
+            'dpi': (x_dpi, y_dpi),
+            'fgpath': 'path/to/foreground' or None,
+            'bgpath': 'path/to/background' or None
+        }
+    """
     
+# Collect main output TIFFs
+    tiff_files = sorted([
+        f for f in os.listdir(out_dir)
+        if f.lower().endswith(('.tif', '.tiff'))
+    ])
+
+    if not tiff_files:
+        print(f"\n{COLOR_BOLD}No TIFF files found in {out_dir}.{COLOR_RESET}\n")
+        return []
+
+    # Also list mixed-page sources
+    fg_files = set([
+        f for f in os.listdir(foreground_dir)
+        if f.lower().endswith(('.tif', '.tiff'))
+    ]) if os.path.exists(foreground_dir) else set()
+
+    bg_files = set([
+        f for f in os.listdir(background_dir)
+        if f.lower().endswith(('.tif', '.tiff'))
+    ]) if os.path.exists(background_dir) else set()
+
+    # Warn if a mixed page exists but not in ./out
+    mixed_missing = (fg_files | bg_files) - set(tiff_files)
+    for missing in sorted(mixed_missing):
+        print(f"{COLOR_RED}Mixed page '{missing}' has no matching file in {out_dir}!{COLOR_RESET}")
+        
+
+    pages = []
+    mixed_count = 0
+    standard_count = 0
+
+    if show_only:
+        print(f"\n{COLOR_BOLD}{COLOR_CYAN}TIFF files to be processed:{COLOR_RESET}\n")
+
+    for fname in tiff_files:
+        page_path = os.path.join(out_dir, fname)
+        fg_path = os.path.join(foreground_dir, fname)
+        bg_path = os.path.join(background_dir, fname)
+
+        # Classify page type
+        if os.path.exists(fg_path) and os.path.exists(bg_path):
+            page_type = "mixed"
+            mixed_count += 1
+            color = COLOR_YELLOW
+        else:
+            page_type = "standard"
+            standard_count += 1
+            color = COLOR_GREEN
+
+        # Read image metadata
+        try:
+            with Image.open(page_path) as img:
+                size = img.size  # (width_px, height_px)
+                dpi = img.info.get("dpi", (0, 0))
+        except Exception as e:
+            size = (0, 0)
+            dpi = (0, 0)
+            print(f"{COLOR_YELLOW}Warning:{COLOR_RESET} Could not read image {fname}: {e}")
+        
+        # For mixed pages, check consistency
+        if page_type == "mixed":
+            try:
+                with Image.open(fg_path) as fg_img, Image.open(bg_path) as bg_img:
+                    fg_size, fg_dpi = fg_img.size, fg_img.info.get("dpi", (0, 0))
+                    bg_size, bg_dpi = bg_img.size, bg_img.info.get("dpi", (0, 0))
+                    if fg_size != bg_size or fg_dpi != bg_dpi:
+                        warnings += 1
+                        print(f"{COLOR_RED}Mismatch in {fname}:{COLOR_RESET} "
+                              f"FG {fg_size}@{fg_dpi} vs BG {bg_size}@{bg_dpi}")
+            except Exception as e:
+                print(f"{COLOR_RED}Error checking mixed page {fname}: {e}{COLOR_RESET}")
+
+        # Display info if requested
+        if show_only:
+            print(f"  {color}{fname:<15}{COLOR_RESET} ({page_type}, {size[0]}×{size[1]} px, {int(dpi[0])} dpi)")
+
+        pages.append({
+            "filename": fname,
+            "path": page_path,
+            "type": page_type,
+            "size": size,
+            "dpi": dpi,
+            "fgpath": fg_path if page_type == "mixed" else None,
+            "bgpath": bg_path if page_type == "mixed" else None,
+        })
+
+    if show_only:
+        print(f"\n{COLOR_BOLD}Summary:{COLOR_RESET}")
+        print(f"  {COLOR_GREEN}{standard_count}{COLOR_RESET} standard pages")
+        print(f"  {COLOR_YELLOW}{mixed_count}{COLOR_RESET} mixed pages")
+        print(f"  Total: {len(pages)} pages\n")
+
+    return pages
+
+# ---------------------------------------------------------------------------------------
+
 def resample_image_to_dpi(img_path, target_dpi):
     # see https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-filters
     # Image.Resampling.BICUBIC, Image.Resampling.BILINEAR, Image.Resampling.HAMMING, Image.Resampling.LANCZOS
@@ -135,26 +238,62 @@ def resample_image_to_dpi(img_path, target_dpi):
     img_resized = img.resize(new_size, mode)
     img_resized.info['dpi'] = (target_dpi, target_dpi)
     return img_resized
+    
+# ---------------------------------------------------------------------------------------
 
-# Collect page files
-all_files = sorted(f for f in os.listdir(out_dir) if f.lower().endswith(('.tif','.tiff')))
-if not all_files:
+out_dir = "./out"                                           # ScanTailor's output TIFFs are assumed here
+foreground_dir = os.path.join(out_dir, "foreground")        # 1-bit text TIFFs from ScanTailor
+background_dir = os.path.join(out_dir, "background")        # color/grayscale TIFF
+pdf_dir = "./pdf"                                           # directory to store individual page PDFs
+combined_pdf = "out-combined.pdf"                           # temporary PDF from merging all page PDFs
+final_pdf = "out.pdf"                                       # final PDF with or without OCR
+indent = "    "
+
+if not os.path.exists(out_dir):
+    sys.exit(f"The directory '{out_dir}' does not exist. Please run ScanTailor first.")
+
+# --- Color codes for terminal output ---
+COLOR_RESET  = "\033[0m"
+COLOR_YELLOW = "\033[93m"
+COLOR_GREEN  = "\033[92m"
+COLOR_CYAN   = "\033[96m"
+COLOR_BOLD   = "\033[1m"
+
+# ---------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------
+
+# Collect page files from out_dir:
+# tiff_files = sorted(f for f in os.listdir(out_dir) if f.lower().endswith(('.tif','.tiff')))
+tiff_files = collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=args.list_only)
+
+if not tiff_files:
     sys.exit(f"No TIFF files found in '{out_dir}'")
+    
+if args.list_only:
+    sys.exit(0)
+
+# ------- actual page processing starts here --------------------------------------------
+
+# Create new ./pdf/ directory
+if os.path.exists(pdf_dir):
+    shutil.rmtree(pdf_dir)
+os.makedirs(pdf_dir, exist_ok=True)
 
 count_standard = 0
 count_mixed = 0
 
 # Page by page loop
-for tiff_file in all_files:
-    base_name = os.path.splitext(tiff_file)[0]
-    fg_path = os.path.join(foreground_dir, tiff_file)
-    bg_path = os.path.join(background_dir, tiff_file)
+for tiff_file in tiff_files:
+    base_name = tiff_file["filename"]
     output_pdf_path = os.path.join(pdf_dir, f"{base_name}.pdf")
     
     with tempfile.NamedTemporaryFile(prefix=base_name+"-", suffix=".pdf", delete=False) as tmp_pdf:
         tmp_pdf_path = tmp_pdf.name
     
-    if os.path.exists(fg_path) and os.path.exists(bg_path):
+    # if os.path.exists(fg_path) and os.path.exists(bg_path):
+    if tiff_file["type"] == "mixed":
+        fg_path = tiff_file["fgpath"]
+        bg_path = tiff_file["bgpath"]
         # Mixed page: overlay foreground over background TIFF
         count_mixed += 1
         print(f"Processing MIXED page {base_name} ......")
@@ -188,10 +327,11 @@ for tiff_file in all_files:
         doc.save(tmp_pdf_path)
         doc.close()
     else:
-        # Standard page (monochrome TIFF)
+        # Standard page (non-mixed monochrome or grayscale/color TIFF)
+        std_path = tiff_file["path"]
         count_standard += 1
         print(f"Processing STANDARD page {base_name} ......")
-        img = Image.open(os.path.join(out_dir, tiff_file))
+        img = Image.open(std_path)
         dpi = img.info.get("dpi", (300,300))[0]
         # print(f"image size = {float(img.width) / dpi} x {float(img.height) / dpi} inches")
         width_pt  = img.width  * 72.0 / dpi
@@ -225,7 +365,7 @@ for tiff_file in all_files:
             os.remove(tmp_pdf_path)
         except FileNotFoundError:
             pass   
-# End of page by page loop
+# End of page-by-page loop
 
 # Summary
 total_pages = count_standard + count_mixed
@@ -234,7 +374,8 @@ print(f" - Standard pages: {count_standard}")
 print(f" - Mixed pages: {count_mixed}")
 print(f" - Total pages: {total_pages}")
 
-# Now merge all page PDFs into a single document:
+# ------- Now merge all page PDFs into a single document: ---------------------------------
+
 print(f"\nMerging all page PDFs into {combined_pdf}")
 pdf_files = sorted(glob.glob("pdf/*.pdf"))
 if not pdf_files:
@@ -252,9 +393,10 @@ merge_command = [
 
 subprocess.run(merge_command, check=True)
 
-# Optionally perform OCR on the merged and compressed PDF without any further optimization
+# ------- Optionally perform OCR on the merged and compressed PDF without any further optimization
+
 if do_ocr:
-    print(f"Doing OCR on {combined_pdf} writing result to {final_pdf} (lang={ocr_language})")
+    print(f"Running OCR on {combined_pdf} writing result to {final_pdf} (lang={ocr_language})")
     ocr_command = [
         "ocrmypdf",
         "--quiet",                      # remove to get verbose output
@@ -273,12 +415,13 @@ else:
     print(f"Skipping OCR, creating {final_pdf}")
     shutil.move(combined_pdf, final_pdf)
 
-# Final cleanup
+# ------- Final cleanup --------------------------------------------------------------------
+
 if os.path.exists(combined_pdf):
     os.remove(combined_pdf)
     
 if keep_pdfs:
-    print(f"Keeping page PDFs in {pdf_dir} directory")
+    print(f"Keeping single page PDFs in {pdf_dir} directory")
 else:
     print(f"Removing {pdf_dir} directory")
     shutil.rmtree(pdf_dir)
