@@ -91,8 +91,7 @@ parser.add_argument("--quality", type=str, default="/printer",
                     
 parser.add_argument("--keepPDFs", type=str, default="false",
                     choices=["true", "false"],
-                    help="Whether to keep the ./pdf directory (true/false). Default: false")
-
+                    help="Whether to keep the intermediate ./pdf directory (default: false")
 parser.add_argument("--list-only", action="store_true",
                     help="Only list TIFF files to be processed and exit")
 
@@ -405,7 +404,7 @@ if do_ocr:
         "--redo-ocr",
         "--optimize", "0",
         #"--jbig2-lossless",
-        "--rotate-pages", "--rotate-pages-threshold", "2",
+        #"--rotate-pages", "--rotate-pages-threshold", "2",   # inhibit automatic page rotation
         f"{combined_pdf}",
         f"{final_pdf}"
     ]
