@@ -263,7 +263,7 @@ if not os.path.exists(out_dir):
 # ---------------------------------------------------------------------------------------
 
 # Collect page files from out_dir:
-tiff_files = collect_tiff_files(out_dir, foreground_dir, background_dir, verbose=true)
+tiff_files = collect_tiff_files(out_dir, foreground_dir, background_dir, verbose=True)
 
 if not tiff_files:
     sys.exit(f"No TIFF files found in '{out_dir}'")
