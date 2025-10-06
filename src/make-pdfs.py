@@ -106,9 +106,16 @@ do_ocr = (ocr_language.lower() != "none")
 ghostscript_quality = args.quality     # /screen, /ebook, /printer, /prepress, /default
 keep_pdfs = args.keepPDFs.lower() in ("1", "true", "yes")
 
+# --- Color codes for terminal output ---
+COLOR_RESET  = "\033[0m"
+COLOR_YELLOW = "\033[93m"
+COLOR_GREEN  = "\033[92m"
+COLOR_CYAN   = "\033[96m"
+COLOR_BOLD   = "\033[1m"
+
 # ----------------------------------------------------------------------------------------
 
-def collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=False):
+def collect_tiff_files(out_dir, foreground_dir, background_dir, verbose=False):
     """
     Collects all TIFF files from the main output directory and classifies
     them as 'standard' or 'mixed' depending on the presence of associated
@@ -157,7 +164,7 @@ def collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=False)
     mixed_count = 0
     standard_count = 0
 
-    if show_only:
+    if verbose:
         print(f"\n{COLOR_BOLD}{COLOR_CYAN}TIFF files to be processed:{COLOR_RESET}\n")
 
     for fname in tiff_files:
@@ -199,7 +206,7 @@ def collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=False)
                 print(f"{COLOR_RED}Error checking mixed page {fname}: {e}{COLOR_RESET}")
 
         # Display info if requested
-        if show_only:
+        if verbose:
             print(f"  {color}{fname:<15}{COLOR_RESET} ({page_type}, {size[0]}×{size[1]} px, {int(dpi[0])} dpi)")
 
         pages.append({
@@ -212,7 +219,7 @@ def collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=False)
             "bgpath": bg_path if page_type == "mixed" else None,
         })
 
-    if show_only:
+    if verbose:
         print(f"\n{COLOR_BOLD}Summary:{COLOR_RESET}")
         print(f"  {COLOR_GREEN}{standard_count}{COLOR_RESET} standard pages")
         print(f"  {COLOR_YELLOW}{mixed_count}{COLOR_RESET} mixed pages")
@@ -252,19 +259,11 @@ indent = "    "
 if not os.path.exists(out_dir):
     sys.exit(f"The directory '{out_dir}' does not exist. Please run ScanTailor first.")
 
-# --- Color codes for terminal output ---
-COLOR_RESET  = "\033[0m"
-COLOR_YELLOW = "\033[93m"
-COLOR_GREEN  = "\033[92m"
-COLOR_CYAN   = "\033[96m"
-COLOR_BOLD   = "\033[1m"
-
 # ---------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------
 
 # Collect page files from out_dir:
-# tiff_files = sorted(f for f in os.listdir(out_dir) if f.lower().endswith(('.tif','.tiff')))
-tiff_files = collect_tiff_files(out_dir, foreground_dir, background_dir, show_only=args.list_only)
+tiff_files = collect_tiff_files(out_dir, foreground_dir, background_dir, verbose=true)
 
 if not tiff_files:
     sys.exit(f"No TIFF files found in '{out_dir}'")
