@@ -417,6 +417,7 @@ else:
 # ------- Final cleanup --------------------------------------------------------------------
 
 if os.path.exists(combined_pdf):
+    print(f"Removing file {combined_pdf}")
     os.remove(combined_pdf)
     
 if keep_pdfs:
