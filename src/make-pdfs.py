@@ -233,7 +233,7 @@ def resample_image_to_dpi(img_path, target_dpi):
     # see https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-filters
     # Image.Resampling.BICUBIC, Image.Resampling.BILINEAR, Image.Resampling.HAMMING, Image.Resampling.LANCZOS
     mode = Image.Resampling.LANCZOS       
-    print(f"{indent}Resampling image {img_path} to {target_dpi} dpi ({mode.name})")
+    # print(f"{indent}Resampling image {img_path} to {target_dpi} dpi ({mode.name})")
     img = Image.open(img_path)
     if target_dpi == 0:
         # Skip resampling
