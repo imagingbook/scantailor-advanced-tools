@@ -12,23 +12,29 @@
 # <scans>/out.pdf ............. the combined document PDF
 #
 # Usage:
-#   Assumes that Scantailor's root folder (with original scan images) is <scans>.
-#   For example, <scans> = "~/scan-projects/book1/orig-all".
+#   Assumes that Scantailor's root folder (with the original scan images) is <scans>,
+#   which contains  <scans>/out created by ScainTailor.
+#   For example, let
+#       <scans> = "~/scan-projects/book1/orig-all"
+#   In Windows (WSL shell): 
+#       > cd /mnt/c/scan-projects/book1/orig-all
 #   If a virtual Python environment is used ("scaintailor-env" here), activate it:
-#   > source ~/lensfun-env/bin/activate (only once, echo $VIRTUAL_ENV gives current env)
-#   Copy this script to the <cans> directory:
-#   > cp make-pdfs.py <scans>
-#   Navigate to the <cans> directory:
-#   > cd <scans>
-#   Run the script:
-#   > python3 make-pdfs.py
-#   > python3 make-pdfs.py --list-only
-#   > python3 make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true
-#   > python3 make-pdfs.py --lang=eng+deu                           # do OCR in english and german
-#   > python3 make-pdfs.py --lang=none                              # skip OCR
-#   > python3 make-pdfs.py --help
+#       > source ~/scantailor-env/bin/activate 
+#           (only once, echo $VIRTUAL_ENV gives the current virtual environment)
+#   Copy this script to the <scans> directory:
+#       > cp make-pdfs.py <scans>
+#   Navigate to the <cans> directory (see above):
+#       > cd <scans>
+#   Run the script, e.g.
+#       > python3 make-pdfs.py
+#       > python3 make-pdfs.py --list-only
+#       > python3 make-pdfs.py --dpi=300 --lang=eng --keepPDFs=true
+#       > python3 make-pdfs.py --dpi=300 --lang=deu --keepPDFs=true
+#       > python3 make-pdfs.py --lang=eng+deu                           # do OCR in english and german
+#       > python3 make-pdfs.py --lang=none                              # skip OCR
+#       > python3 make-pdfs.py --help
 #   Deactivate the virtual environment (if used):
-#   > deactivate (optional at end)
+#       > deactivate
 #
 # This script assumes use of ScanTailor-Advanced (1.0.19 or higher), with
 # the 'Split output' option applied to 'Mixed' pages, putting marked picture regions into RGB background TIFFs
@@ -82,16 +88,17 @@ parser.add_argument("--lang", type=str, default="deu",
                     help="OCR language(s), e.g., 'eng', 'deu' (default), or multiple: 'eng+deu'. Use 'none' to skip OCR.")
                     
 parser.add_argument("--dpi", type=int, default=300,
-                    help="target DPI for picture downsampling (default: 300). Use 0 to skip resampling.")
+                    help="Target DPI for background/picture downsampling (default: 300). Use 0 to suppress resampling.")
                     
 parser.add_argument("--quality", type=str, default="/printer",
                     choices=["/screen", "/ebook", "/printer", "/prepress"],
                     help="Ghostscript quality preset for final page PDFs (default: /printer).")
                     # see https://ghostscript.readthedocs.io/en/gs10.0.0/VectorDevices.html#the-family-of-pdf-and-postscript-output-devices
                     
-parser.add_argument("--keepPDFs", type=str, default="false",
+parser.add_argument("--keepPDFs", type=str, default="true",
                     choices=["true", "false"],
-                    help="Whether to keep the intermediate ./pdf directory (default: false")
+                    help="Whether to keep the intermediate ./pdf directory (true/false). Default: true")
+
 parser.add_argument("--list-only", action="store_true",
                     help="Only list TIFF files to be processed and exit")
 
@@ -99,8 +106,8 @@ parser.add_argument("--list-only", action="store_true",
 
 args = parser.parse_args()
 
-background_dpi = args.dpi   # 300
-ocr_language = args.lang    # "deu"
+background_dpi = args.dpi
+ocr_language = args.lang
 do_ocr = (ocr_language.lower() != "none")
 ghostscript_quality = args.quality     # /screen, /ebook, /printer, /prepress, /default
 keep_pdfs = args.keepPDFs.lower() in ("1", "true", "yes")
